@@ -2,12 +2,10 @@ import numpy as np
 import os, sys
 
 class NeuralNetwork:
-    def __init__(self,input_nodes,output_nodes, NNodes, activate, deltaActivate):
+    def __init__(self, NNodes, activate, deltaActivate):
         self.NNodes = NNodes # the number of nodes in the hidden layer
         self.activate = activate # a function used to activate
         self.deltaActivate = deltaActivate # the derivative of activate 这个是sigmoidDeriv
-        self.input_nodes = input_nodes  #number of input nodes
-        self.output_nodes = output_nodes  #number of output nodes
 
 
     def fit(self, X, Y, learningRate, epochs, regLambda):
@@ -25,6 +23,9 @@ class NeuralNetwork:
         """
         # Initialize your weight matrices first.
         # (hint: check the sizes of your weight matrices first!)
+        self.input_nodes = 2  #number of input nodes
+        self.output_nodes = 1  #number of output nodes
+
         self.W1 = np.random.rand(input_nodes,NNodes)
         self.W2 = np.random.rand(NNodes,output_nodes)
         self.regLambda = regLambda
@@ -38,10 +39,10 @@ class NeuralNetwork:
             # For each training sample (X[i], Y[i]), do
             for i in range(0,len(X)):
                 # 1. Forward propagate once. Use the function "forward" here!
-                forward_output.append(forward(X[i],self.W1,self.W2))
+                forward_output.append(forward(X[i]))
                 
                 # 2. Backward progate once. Use the function "backpropagate" here!
-                back_output.append(backpropagate(X[i],Y[i],self.W1,self.W2))
+                back_output.append(backpropagate(X[i],Y[i]))
 
         pass
         
@@ -58,6 +59,7 @@ class NeuralNetwork:
             The predictions of X.
         ----------
         """
+        #不是已经iterate over X in fit了吗，为什么还要predict the labels for each sample in X
         YPredict = forward(X)
         return YPredict
 
@@ -100,7 +102,6 @@ class NeuralNetwork:
         # (hint: your regularization term should appear here)
 
         # for each term in (ypredict - ytrue)^2 *0.5
-        # TODO: regulation for overly complex model
         result = 0.5*(YTrue-YPredict)**2/X.shape + (self.regLambda/2)*(sum(self.W1**2)+sum(self.W2**2))
         return result
 
@@ -170,7 +171,7 @@ def train(XTrain, YTrain, args):
         This should be the trained NN object.
     """
     # 1. Initializes a network object with given args.
-    
+    newnn = NeuralNetwork(args[0],args[1],args[2])
     
     # 2. Train the model with the function "fit".
     # (hint: use the plotDecisionBoundary function to visualize after training)
