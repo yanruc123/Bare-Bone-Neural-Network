@@ -25,6 +25,7 @@ class NeuralNetwork:
         # (hint: check the sizes of your weight matrices first!)
         self.input_nodes = 2  #number of input nodes
         self.output_nodes = 1  #number of output nodes
+        self.learningRate = learningRate
 
         self.W1 = np.random.rand(input_nodes,NNodes)
         self.W2 = np.random.rand(NNodes,output_nodes)
@@ -88,12 +89,13 @@ class NeuralNetwork:
         costderiv2 = np.dot(np.dot(costderiv3,np.transpose(W2)),deltaActivate(self.z2)) 
 
         #lambda*weight is added to djdw for regularization to prevent overfitting 
+        # how to use learning rate: gradiant*learning_rate
         djdw2 = np.dot(np.transpose(self.a2),costderiv3) + self.regLambda*self.W2  
         djdw1 = np.dot(np.transpose(X),costderiv2) + self.regLambda*self.W1
         
         # Update weight matrices.cs
-        self.W1 += djdw1  #需要乘以scalar吗
-        self.W2 += djdw2
+        self.W1 += djdw1*learningRate
+        self.W2 += djdw2*learningRate
 
         pass
         
