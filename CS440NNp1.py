@@ -82,7 +82,9 @@ class NeuralNetwork:
         
     def backpropagate(self,X,W1,W2):
         # Compute loss / cost using the getCost function.
-        costderiv3 = 
+        YPredict = predict(X)
+        YTrue = 
+        costderiv3 = getCost(YPredict)
         costderiv2 =       
                 
         # Compute gradient for each layer.
@@ -99,10 +101,8 @@ class NeuralNetwork:
 
         # for each term in (ypredict - ytrue)^2 *0.5
         # TODO: find out dimension of ytrue and y predict and 修改
-        -(YPredict-YTrue)*(map(sigmoidDeriv,self.z3)
-        result = 0.5*(YPredict - YTrue)**2
+        result = (-1)*(YPredict-YTrue)*sigmoidDeriv(self.z3)
         return result
-        pass
 
 def getData(dataDir):
     '''
