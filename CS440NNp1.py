@@ -27,6 +27,7 @@ class NeuralNetwork:
         # (hint: check the sizes of your weight matrices first!)
         self.W1 = np.random.rand(input_nodes,NNodes)
         self.W2 = np.random.rand(NNodes,output_nodes)
+        self.regLambda = regLambda
 
         #record 2 list of testing result
         forward_output = []
@@ -75,28 +76,32 @@ class NeuralNetwork:
         return yhat
         
     def backpropagate(self,X,YTrue):
+        YPredict = predict(X)
+
         # Compute loss / cost using the getCost function.
-        YPredict = predict(X,self.W1,self.W2)
-        costderiv3 = getCost(YTrue,YPredict)
-        costderiv2 = np.dot(np.dot(costderiv3,np.transpose(W2)),deltaActivate(self.z2))      
+        cost = getCost(X, YTrue, YPredict)
                 
         # Compute gradient for each layer.
-        djdw2 = np.dot(np.transpose(self.a2),costderiv3)
-        djdw1 = np.dot(np.transpose(X),costderiv2)
+        costderiv3 = ((-1)*(YPredict-YTrue))*deltaActivate(self.z3)
+        costderiv2 = np.dot(np.dot(costderiv3,np.transpose(W2)),deltaActivate(self.z2)) 
+
+        #lambda*weight is added to djdw for regularization to prevent overfitting 
+        djdw2 = np.dot(np.transpose(self.a2),costderiv3) + self.regLambda*self.W2  
+        djdw1 = np.dot(np.transpose(X),costderiv2) + self.regLambda*self.W1
         
-        # Update weight matrices.
+        # Update weight matrices.cs
         self.W1 += djdw1  #需要乘以scalar吗
         self.W2 += djdw2
 
         pass
         
-    def getCost(self, YTrue, YPredict):
+    def getCost(self, X, YTrue, YPredict):
         # Compute loss / cost in terms of crossentropy.
         # (hint: your regularization term should appear here)
 
         # for each term in (ypredict - ytrue)^2 *0.5
-        # TODO: find out dimension of ytrue and y predict and 修改!!!!!!!!!
-        result = ((-1)*(YPredict-YTrue))*deltaActivate(self.z3)
+        # TODO: regulation for overly complex model
+        result = 0.5*(YTrue-YPredict)**2/X.shape + (self.regLambda/2)*(sum(self.W1**2)+sum(self.W2**2))
         return result
 
 def getData(dataDir):
