@@ -5,7 +5,7 @@ class NeuralNetwork:
     def __init__(self,input_nodes,output_nodes, NNodes, activate, deltaActivate):
         self.NNodes = NNodes # the number of nodes in the hidden layer
         self.activate = activate # a function used to activate
-        self.deltaActivate = deltaActivate # the derivative of activate
+        self.deltaActivate = deltaActivate # the derivative of activate 这个是sigmoidDeriv
         self.input_nodes = input_nodes  #number of input nodes
         self.output_nodes = output_nodes  #number of output nodes
 
@@ -25,8 +25,8 @@ class NeuralNetwork:
         """
         # Initialize your weight matrices first.
         # (hint: check the sizes of your weight matrices first!)
-        W1 = np.random.rand(input_nodes,NNodes)
-        W2 = np.random.rand(NNodes,output_nodes)
+        self.W1 = np.random.rand(input_nodes,NNodes)
+        self.W2 = np.random.rand(NNodes,output_nodes)
 
         #record 2 list of testing result
         forward_output = []
@@ -36,12 +36,11 @@ class NeuralNetwork:
         for e in epochs:
             # For each training sample (X[i], Y[i]), do
             for i in range(0,len(X)):
-                sample = (X[i],Y[i])
                 # 1. Forward propagate once. Use the function "forward" here!
-                forward_output.append(forward(sample,W1,W2))
+                forward_output.append(forward(X[i],self.W1,self.W2))
                 
                 # 2. Backward progate once. Use the function "backpropagate" here!
-                back_output.append(backpropagate(sample,W1,W2))
+                back_output.append(backpropagate(X[i],Y[i],self.W1,self.W2))
 
         pass
         
@@ -58,41 +57,37 @@ class NeuralNetwork:
             The predictions of X.
         ----------
         """
+        YPredict = forward(X)
         return YPredict
 
-    def forward(self, X, W1, W2):
+    def forward(self, X):
         # Perform matrix multiplication and activation twice (one for each layer).
         # (hint: add a bias term before multiplication)
 
         # X = matrix of input nodes
         # W1 = matrix of weight between input and first hidden layer
         # W2 = matrix of weight between second hidden layer and output layer
-        self.z2 = np.dot(X,W1)
-        self.a2 = sigmoid(self.z2)
+        self.z2 = np.dot(X,self.W1)
+        self.a2 = activate(self.z2)
         self.z3 = np.dot(a2,W2)
-        yhat = sigmoid(self.z3)
+        yhat = activate(self.z3)
 
         return yhat
-
-    def sigmoid(self, z):
-        return 1/(1+np.exp(-z))
-
-    def sigmoidDeriv(self,z):
-        return np.exp(-z)/((1+np.exp(-z))**2)
         
-    def backpropagate(self,X,W1,W2):
+    def backpropagate(self,X,YTrue):
         # Compute loss / cost using the getCost function.
-        YPredict = predict(X)
-        YTrue = 
-        costderiv3 = getCost(YPredict)
-        costderiv2 =       
+        YPredict = predict(X,self.W1,self.W2)
+        costderiv3 = getCost(YTrue,YPredict)
+        costderiv2 = np.dot(np.dot(costderiv3,np.transpose(W2)),deltaActivate(self.z2))      
                 
         # Compute gradient for each layer.
         djdw2 = np.dot(np.transpose(self.a2),costderiv3)
         djdw1 = np.dot(np.transpose(X),costderiv2)
         
-        
         # Update weight matrices.
+        self.W1 += djdw1  #需要乘以scalar吗
+        self.W2 += djdw2
+
         pass
         
     def getCost(self, YTrue, YPredict):
@@ -100,8 +95,8 @@ class NeuralNetwork:
         # (hint: your regularization term should appear here)
 
         # for each term in (ypredict - ytrue)^2 *0.5
-        # TODO: find out dimension of ytrue and y predict and 修改
-        result = (-1)*(YPredict-YTrue)*sigmoidDeriv(self.z3)
+        # TODO: find out dimension of ytrue and y predict and 修改!!!!!!!!!
+        result = ((-1)*(YPredict-YTrue))*deltaActivate(self.z3)
         return result
 
 def getData(dataDir):
