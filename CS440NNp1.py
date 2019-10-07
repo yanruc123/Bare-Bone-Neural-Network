@@ -61,7 +61,9 @@ class NeuralNetwork:
         ----------
         """
         #不是已经iterate over X in fit了吗，为什么还要predict the labels for each sample in X
-        YPredict = forward(X)
+        YPredict = []
+        for x in X:
+            YPredict.append(forward(x))
         return YPredict
 
     def forward(self, X):
@@ -239,3 +241,12 @@ def getPerformanceScores(YTrue, YPredict):
         This should be a dictionary.
     """
     pass
+
+# incase of use: activate, deltaActivate
+def sigmoid(self, z):
+        return 1/(1+np.exp(-z))
+
+def sigmoidDeriv(self,z):
+        return np.exp(-z)/((1+np.exp(-z))**2)
+
+
