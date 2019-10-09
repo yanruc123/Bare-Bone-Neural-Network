@@ -1,12 +1,18 @@
 import numpy as np
 import os, sys
 
-class NeuralNetwork:
-    def __init__(self, NNodes, activate, deltaActivate):
-        self.NNodes = NNodes # the number of nodes in the hidden layer
-        self.activate = activate # a function used to activate
-        self.deltaActivate = deltaActivate # the derivative of activate 这个是sigmoidDeriv
 
+class NeuralNetwork:
+    def __init__(self, NNodes):
+        self.NNodes = NNodes  # the number of nodes in the hidden layer
+        self.activate = sigmoid # a function used to activate
+        self.deltaActivate = sigmoidDeriv  # the derivative of activate 这个是sigmoidDeriv
+
+        self.input_nodes = 2  # number of input nodes
+        self.output_nodes = 1  # number of output nodes
+
+        self.W1 = np.random.rand(self.input_nodes, NNodes)
+        self.W2 = np.random.rand(NNodes, self.output_nodes)
 
     def fit(self, X, Y, learningRate, epochs, regLambda):
         """
@@ -23,30 +29,19 @@ class NeuralNetwork:
         """
         # Initialize your weight matrices first.
         # (hint: check the sizes of your weight matrices first!)
-        self.input_nodes = 2  #number of input nodes
-        self.output_nodes = 1  #number of output nodes
-        self.learningRate = learningRate
 
-        self.W1 = np.random.rand(input_nodes,NNodes)
-        self.W2 = np.random.rand(NNodes,output_nodes)
-        self.regLambda = regLambda
-
-        #record 2 list of testing result
+        # record 2 list of testing result
         forward_output = []
         back_output = []
-        
+
         # For each epoch, do
         for e in epochs:
             # For each training sample (X[i], Y[i]), do
-            for i in range(0,len(X)):
+            for i in range(0, len(X)):
                 # 1. Forward propagate once. Use the function "forward" here!
-                forward_output.append(forward(X[i]))
-                
-                # 2. Backward progate once. Use the function "backpropagate" here!
-                back_output.append(backpropagate(X[i],Y[i]))
+                forward_output.append(self.forward(X[i]))
 
-        pass
-        
+            back_output.append(self.backpropagate(X, Y,learningRate,regLambda))
 
     def predict(self, X):
         """
@@ -60,10 +55,10 @@ class NeuralNetwork:
             The predictions of X.
         ----------
         """
-        #不是已经iterate over X in fit了吗，为什么还要predict the labels for each sample in X
+
         YPredict = []
         for x in X:
-            YPredict.append(forward(x))
+            YPredict.append(self.forward(x))
         return YPredict
 
     def forward(self, X):
@@ -73,60 +68,44 @@ class NeuralNetwork:
         # X = matrix of input nodes
         # W1 = matrix of weight between input and first hidden layer
         # W2 = matrix of weight between second hidden layer and output layer
-        self.z2 = np.dot(X,self.W1)
-        self.a2 = activate(self.z2)
-        self.z3 = np.dot(a2,W2)
-        yhat = activate(self.z3)
+        z2 = np.dot(X, self.W1)
+        a2 = self.activate(z2)
+        a2 = np.concatenate((np.ones(1).T, np.array(a2)))
+        z3 = np.dot(a2, self.W2)
+        yhat = self.activate(z3)
 
         return yhat
-        
-    def backpropagate(self,X,YTrue):
-        YPredict = predict(X)
 
-        # Compute loss / cost using the getCost function.
-        cost = getCost(X, YTrue, YPredict)
-                
-        # Compute gradient for each layer.
-        costderiv3 = ((-1)*(YPredict-YTrue))*deltaActivate(self.z3)
-        costderiv2 = np.dot(np.dot(costderiv3,np.transpose(W2)),deltaActivate(self.z2)) 
+    def backpropagate(self, X, YTrue, learningRate, regLambda):
 
-        #lambda*weight is added to djdw for regularization to prevent overfitting 
-        # how to use learning rate: gradiant*learning_rate
-        djdw2 = np.dot(np.transpose(self.a2),costderiv3) + self.regLambda*self.W2  
-        djdw1 = np.dot(np.transpose(X),costderiv2) + self.regLambda*self.W1
-        
-        # Update weight matrices.cs
-        self.W1 += djdw1*learningRate
-        self.W2 += djdw2*learningRate
+        for i in range(X.shape[0]):
+            z2 = np.dot(X, self.W1)
+            a2 = self.activate(z2)
+            z3 = np.dot(a2, self.W2)
+            a3 = self.activate(z3)
 
-        pass
-        
+            costderiv3 = np.multiply(self.deltaActive(a3), YTrue[i] - a3)
+            costderiv2 = np.multiply(self.deltaActive(a2), np.dot(self.w3, costderiv3))
+
+            updateo = np.multiply(learningRate, np.outer(a2, costderiv3))
+            updatei = np.multiply(learningRate, np.outer(X[i], costderiv2[1:]))
+
+            self.w3 += updateo
+            self.w2 += updatei
+
+        learning_rate = learningRate * (1 - regLambda)
+
+
     def getCost(self, X, YTrue, YPredict):
         # Compute loss / cost in terms of crossentropy.
         # (hint: your regularization term should appear here)
 
         # for each term in (ypredict - ytrue)^2 *0.5
-        result = 0.5*(YTrue-YPredict)**2/X.shape + (self.regLambda/2)*(sum(self.W1**2)+sum(self.W2**2))
+        result = 0.5 * (YTrue - YPredict) ** 2
         return result
 
-def getData(dataDir):
-    '''
-    Returns
-    -------
-    X : numpy matrix
-        Input data samples.
-    Y : numpy array
-        Input data labels.
-    '''
-    # TO-DO for this part:
-    # Use your preferred method to read the csv files.
-    # Write your codes here:
-    
-    
-    # Hint: use print(X.shape) to check if your results are valid.
-    return X, Y
 
-def splitData(X, Y, K = 5):
+def splitData(X, Y, K=5):
     '''
     Returns
     -------
@@ -137,9 +116,10 @@ def splitData(X, Y, K = 5):
         sample in the data is used for testing while the 0th, 1st, 2nd, and 3rd samples
         are for training.
     '''
-    
+
     # Make sure you shuffle each train list.
     pass
+
 
 def plotDecisionBoundary(model, X, Y):
     """
@@ -158,6 +138,7 @@ def plotDecisionBoundary(model, X, Y):
     plt.scatter(X[:, 0], X[:, 1], c=y, cmap=plt.cm.bwr)
     plt.show()
 
+
 def train(XTrain, YTrain, args):
     """
     This function is used for the training phase.
@@ -175,8 +156,8 @@ def train(XTrain, YTrain, args):
         This should be the trained NN object.
     """
     # 1. Initializes a network object with given args.
-    model = NeuralNetwork(args[0],args[1],args[2])
-    
+    model = NeuralNetwork(args[0], args[1], args[2])
+
     # 2. Train the model with the function "fit".
     # (hint: use the plotDecisionBoundary function to visualize after training)
     X = XTrain
@@ -186,8 +167,8 @@ def train(XTrain, YTrain, args):
     regLambda = 0.1
     model.fit(X, Y, learningRate, epochs, regLambda)
 
-    plotDecisionBoundary(model,X,Y)
-    
+    plotDecisionBoundary(model, X, Y)
+
     # 3. Return the model.
     return model
 
@@ -208,6 +189,7 @@ def test(XTest, model):
     """
     pass
 
+
 def getConfusionMatrix(YTrue, YPredict):
     TP = 0
     TN = 0
@@ -222,7 +204,7 @@ def getConfusionMatrix(YTrue, YPredict):
             FP += 1
         if YTrue[i] == 0 and YPredict[i] == 0:
             TN += 1
-    CM = [TP,FP,FN,TN]
+    CM = [[TP, FP], [FN, TN]]
     return CM
 
     """
@@ -237,7 +219,8 @@ def getConfusionMatrix(YTrue, YPredict):
     CM : numpy matrix
         The confusion matrix.
     """
-    
+
+
 def getPerformanceScores(YTrue, YPredict):
     """
     Computes the accuracy, precision, recall, f1 score.
@@ -256,21 +239,21 @@ def getPerformanceScores(YTrue, YPredict):
         This should be a dictionary.
     """
     CM = getConfusionMatrix(YTrue, YPredict)
-    accuracy = (CM[0]+CM[3])/(CM[0]+CM[1]+CM[2]+CM[3])
-    precision = CM[0]/(CM[0]+CM[1])
-    recall = CM[0]/(CM[0]+CM[2])
-    f1 = (2*recall*precision)/(recall+precision)
-    return {"CM" : CM,
-    "accuracy" : accuracy,
-    "precision" : precision,
-    "recall" : recall,
-    "f1" : f1}
+    accuracy = (CM[0][0] + CM[1][1]) / (CM[0][0] + CM[0][1] + CM[1][0] + CM[1][1])
+    precision = CM[0] / (CM[0] + CM[1])
+    recall = CM[0] / (CM[0] + CM[2])
+    f1 = (2 * recall * precision) / (recall + precision)
+    return {"CM": CM,
+            "accuracy": accuracy,
+            "precision": precision,
+            "recall": recall,
+            "f1": f1}
+
 
 # incase of use: activate, deltaActivate
-def sigmoid(self, z):
-        return 1/(1+np.exp(-z))
-
-def sigmoidDeriv(self,z):
-        return np.exp(-z)/((1+np.exp(-z))**2)
+def sigmoid(z):
+    return 1 / (1 + np.exp(-z))
 
 
+def sigmoidDeriv(z):
+    return sigmoid(z)*(1.0-sigmoid(z))
