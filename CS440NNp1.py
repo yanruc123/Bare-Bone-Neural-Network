@@ -1,12 +1,18 @@
 import numpy as np
 import os, sys
+#import matplotlib.pyplot as plt  #need to be commented out
 
 class NeuralNetwork:
     def __init__(self, NNodes, activate, deltaActivate):
         self.NNodes = NNodes # the number of nodes in the hidden layer
         self.activate = activate # a function used to activate
         self.deltaActivate = deltaActivate # the derivative of activate 这个是sigmoidDeriv
+        self.input_nodes = 2  #number of input nodes
+        self.output_nodes = 1  #number of output nodes
+        self.learningRate = learningRate
 
+        self.W1 = np.random.rand(input_nodes,NNodes)
+        self.W2 = np.random.rand(NNodes,output_nodes)
 
     def fit(self, X, Y, learningRate, epochs, regLambda):
         """
@@ -23,13 +29,6 @@ class NeuralNetwork:
         """
         # Initialize your weight matrices first.
         # (hint: check the sizes of your weight matrices first!)
-        self.input_nodes = 2  #number of input nodes
-        self.output_nodes = 1  #number of output nodes
-        self.learningRate = learningRate
-
-        self.W1 = np.random.rand(input_nodes,NNodes)
-        self.W2 = np.random.rand(NNodes,output_nodes)
-        self.regLambda = regLambda
 
         #record 2 list of testing result
         forward_output = []
@@ -73,7 +72,7 @@ class NeuralNetwork:
         # X = matrix of input nodes
         # W1 = matrix of weight between input and first hidden layer
         # W2 = matrix of weight between second hidden layer and output layer
-        self.z2 = np.dot(X,self.W1)
+        self.z2 = np.dot(X,self.W1)+self.biases
         self.a2 = activate(self.z2)
         self.z3 = np.dot(a2,W2)
         yhat = activate(self.z3)
@@ -99,15 +98,16 @@ class NeuralNetwork:
         self.W1 += djdw1*learningRate
         self.W2 += djdw2*learningRate
 
-        pass
+        return (djdw1,djdw2)
         
     def getCost(self, X, YTrue, YPredict):
         # Compute loss / cost in terms of crossentropy.
         # (hint: your regularization term should appear here)
 
         # for each term in (ypredict - ytrue)^2 *0.5
-        result = 0.5*(YTrue-YPredict)**2/X.shape + (self.regLambda/2)*(sum(self.W1**2)+sum(self.W2**2))
-        return result
+        J = 0.5* YPredict.shape[1] #cost function
+        L = J * (np.dot(YTrue, np.log(YPredict).T) + np.dot(1 - YTrue, np.log(1 - YPredict).T))  #cross-entropy function
+        return L
 
 def getData(dataDir):
     '''
@@ -237,6 +237,7 @@ def getConfusionMatrix(YTrue, YPredict):
     CM : numpy matrix
         The confusion matrix.
     """
+    pass
     
 def getPerformanceScores(YTrue, YPredict):
     """
@@ -271,6 +272,6 @@ def sigmoid(self, z):
         return 1/(1+np.exp(-z))
 
 def sigmoidDeriv(self,z):
-        return np.exp(-z)/((1+np.exp(-z))**2)
+        return sigmoid(z)*(1-sigmoid(z))
 
 
