@@ -209,6 +209,22 @@ def test(XTest, model):
     pass
 
 def getConfusionMatrix(YTrue, YPredict):
+    TP = 0
+    TN = 0
+    FP = 0
+    FN = 0
+    for i in range(len(YTrue)):
+        if YTrue[i] == 1 and YPredict[i] == 1:
+            TP += 1
+        if YTrue[i] == 1 and YPredict[i] == 0:
+            FN += 1
+        if YTrue[i] == 0 and YPredict[i] == 1:
+            FP += 1
+        if YTrue[i] == 0 and YPredict[i] == 0:
+            TN += 1
+    CM = [TP,FP,FN,TN]
+    return CM
+
     """
     Computes the confusion matrix.
     Parameters
@@ -221,7 +237,6 @@ def getConfusionMatrix(YTrue, YPredict):
     CM : numpy matrix
         The confusion matrix.
     """
-    pass
     
 def getPerformanceScores(YTrue, YPredict):
     """
@@ -240,7 +255,16 @@ def getPerformanceScores(YTrue, YPredict):
     "f1" : float}
         This should be a dictionary.
     """
-    pass
+    CM = getConfusionMatrix(YTrue, YPredict)
+    accuracy = (CM[0]+CM[3])/(CM[0]+CM[1]+CM[2]+CM[3])
+    precision = CM[0]/(CM[0]+CM[1])
+    recall = CM[0]/(CM[0]+CM[2])
+    f1 = (2*recall*precision)/(recall+precision)
+    return {"CM" : CM,
+    "accuracy" : accuracy,
+    "precision" : precision,
+    "recall" : recall,
+    "f1" : f1}
 
 # incase of use: activate, deltaActivate
 def sigmoid(self, z):
