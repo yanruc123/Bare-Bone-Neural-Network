@@ -88,4 +88,132 @@ def sigmoidDeriv(x):
 
 
 
+def KFold(X, Y, K = 5):
+    index = np.arange(len(X))
+    index = np.random.shuffle(index)
+    return index
+
+
+def test(XTest, model):
+    """
+    This function is used for the testing phase.
+    Parameters
+    ----------
+    XTest : numpy matrix
+        The matrix containing samples features (not indices) for testing.
+    model : NeuralNetwork object
+        This should be a trained NN model.
+    Returns
+    -------
+    YPredict : numpy array
+        The predictions of X.
+    """
+
+    YPredict = model.predict(XTest)
+    YPredict = np.argmax(YPredict, axis=1).astype(int)
+    return YPredict
+
+def plotDecisionBoundary(model, X, Y):
+    """
+    Plot the decision boundary given by model.
+    Parameters
+    ----------
+    model : model, whose parameters are used to plot the decision boundary.
+    X : input data
+    Y : input labels
+    """
+    x1_array, x2_array = np.meshgrid(np.arange(-4, 4, 0.01), np.arange(-4, 4, 0.01))
+    grid_coordinates = np.c_[x1_array.ravel(), x2_array.ravel()]
+    Z = model.predict(grid_coordinates)
+    Z = Z.reshape(x1_array.shape)
+    np.plt.contourf(x1_array, x2_array, Z, cmap=np.plt.cm.bwr)
+    np.plt.scatter(X[:, 0], X[:, 1], c=Y, cmap=np.plt.cm.bwr)
+    np.plt.show()
+
+def train(XTrain, YTrain, args):
+    """
+    This function is used for the training phase.
+    Parameters
+    ----------
+    XTrain : numpy matrix
+        The matrix containing samples features (not indices) for training.
+    YTrain : numpy array
+        The array containing labels for training.
+    args : List
+        The list of parameters to set up the NN model.
+    Returns
+    -------
+    NN : NeuralNetwork object
+        This should be the trained NN object.
+    """
+    # 1. Initializes a network object with given args.
+    model = NeuralNetwork(args[0])
+
+    # 2. Train the model with the function "fit".
+    # (hint: use the plotDecisionBoundary function to visualize after training)
+    model.fit(XTrain, YTrain, args[1], args[2], args[3])
+    plotDecisionBoundary(model, XTrain, YTrain)
+
+    # 3. Return the model.
+    return model
+
+
+def getConfusionMatrix(YTrue, YPredict):
+    TP = 0
+    TN = 0
+    FP = 0
+    FN = 0
+    for i in range(len(YTrue)):
+        if YTrue[i] == 1 and YPredict[i] == 1:
+            TP += 1
+        if YTrue[i] == 1 and YPredict[i] == 0:
+            FN += 1
+        if YTrue[i] == 0 and YPredict[i] == 1:
+            FP += 1
+        if YTrue[i] == 0 and YPredict[i] == 0:
+            TN += 1
+    CM = np.array([[TP, FP], [FN, TN]])
+    return CM
+
+    """
+    Computes the confusion matrix.
+    Parameters
+    ----------
+    YTrue : numpy array
+        This array contains the ground truth.
+    YPredict : numpy array
+        This array contains the predictions.
+    Returns
+    CM : numpy matrix
+        The confusion matrix.
+    """
+
+
+def getPerformanceScores(YTrue, YPredict):
+    """
+    Computes the accuracy, precision, recall, f1 score.
+    Parameters
+    ----------
+    YTrue : numpy array
+        This array contains the ground truth.
+    YPredict : numpy array
+        This array contains the predictions.
+    Returns
+    {"CM" : numpy matrix,
+    "accuracy" : float,
+    "precision" : float,
+    "recall" : float,
+    "f1" : float}
+        This should be a dictionary.
+    """
+    CM = getConfusionMatrix(YTrue, YPredict)
+    accuracy = (CM[0][0] + CM[1][1]) / (CM[0][0] + CM[0][1] + CM[1][0] + CM[1][1])
+    precision = CM[0][0] / (CM[0][0] + CM[0][1])
+    recall = CM[0][0] / (CM[0][0] + CM[1][0])
+    f1 = (2 * recall * precision) / (recall + precision)
+    return {"CM": CM,
+            "accuracy": accuracy,
+            "precision": precision,
+            "recall": recall,
+            "f1": f1}
 
